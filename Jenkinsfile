@@ -70,7 +70,7 @@ pipeline {
             steps {
                 script {
                     def allDockerFiles = findFiles glob: '**/Dockerfile'
-                    def dockerFiles = allDockerFiles.findAll { f -> f.path.endsWith("target/Dockerfile") }
+                    def dockerFiles = allDockerFiles.findAll { f -> f.path.endsWith("target/docker/Dockerfile") }
                     def version = readMavenPom().version
 
                     for (def f : dockerFiles) {
