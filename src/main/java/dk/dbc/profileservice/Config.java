@@ -18,9 +18,12 @@
  */
 package dk.dbc.profileservice;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import javax.annotation.PostConstruct;
 import javax.ejb.EJBException;
 import javax.ejb.Lock;
@@ -35,6 +38,8 @@ import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.UriBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static java.util.Collections.unmodifiableList;
 
 /**
  *
@@ -51,6 +56,7 @@ public class Config {
 
     private Client client;
     private UriBuilder openAgencyUrl;
+    private List<String> profiles;
 
     public Config() {
         env = System.getenv();
@@ -70,6 +76,13 @@ public class Config {
                 }).build();
         this.openAgencyUrl = UriBuilder.fromUri(get("OPEN_AGENCY_URL")
                 .orElseThrow(required("OPEN_AGENCY_URL")));
+        String profilesEnabled = get("PROFILES_ENABLED").orElseThrow(required("PROFILES_ENABLED"));
+        List<String> profilesList = Arrays.stream(profilesEnabled.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .sorted()
+                .collect(Collectors.toList());
+        this.profiles = unmodifiableList(profilesList);
     }
 
     public Client getClient() {
@@ -78,6 +91,10 @@ public class Config {
 
     public UriBuilder getOpenAgencyUrl() {
         return openAgencyUrl.clone();
+    }
+
+    public List<String> getProfiles() {
+        return profiles;
     }
 
     private Optional<String> get(String key) {

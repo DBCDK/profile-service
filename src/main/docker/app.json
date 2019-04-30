@@ -8,11 +8,11 @@
                 "timeUnit": "Minutes"
             },
             "oaProfile": {
-                "timeout": "60",
+                "timeout": "${CACHE_SUCCESS_MINUTES}",
                 "timeUnit": "Minutes"
             },
             "oaProfileError": {
-                "timeout": "60",
+                "timeout": "${CACHE_ERROR_MINUTES}",
                 "timeUnit": "Minutes"
             }
         }
