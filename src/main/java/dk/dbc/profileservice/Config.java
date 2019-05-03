@@ -56,7 +56,6 @@ public class Config {
 
     private Client client;
     private UriBuilder openAgencyUrl;
-    private List<String> profiles;
 
     public Config() {
         env = System.getenv();
@@ -76,13 +75,6 @@ public class Config {
                 }).build();
         this.openAgencyUrl = UriBuilder.fromUri(get("OPEN_AGENCY_URL")
                 .orElseThrow(required("OPEN_AGENCY_URL")));
-        String profilesEnabled = get("PROFILES_ENABLED").orElseThrow(required("PROFILES_ENABLED"));
-        List<String> profilesList = Arrays.stream(profilesEnabled.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .sorted()
-                .collect(Collectors.toList());
-        this.profiles = unmodifiableList(profilesList);
     }
 
     public Client getClient() {
@@ -91,10 +83,6 @@ public class Config {
 
     public UriBuilder getOpenAgencyUrl() {
         return openAgencyUrl.clone();
-    }
-
-    public List<String> getProfiles() {
-        return profiles;
     }
 
     private Optional<String> get(String key) {
