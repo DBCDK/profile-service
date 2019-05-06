@@ -63,12 +63,15 @@ public class Profiles {
         List<String> getSearch() {
             return search;
         }
+
         Profile getProfile(String ownCollectionIdenifer) {
+            // We know profiles don't have special characters ('"' or '\')
+            // so simple quotes are enough for SolR
             boolean includeOwnHoldings = search.contains(ownCollectionIdenifer);
             String filterQuery = search.stream()
-                    .map(c -> "rec.collectionIdentifier:'" + c + "'")
+                    .map(c -> "rec.collectionIdentifier:\"" + c + "\"")
                     .collect(Collectors.joining(" OR "));
-            if(includeOwnHoldings)
+            if (includeOwnHoldings)
                 filterQuery = filterQuery + " OR rec.holdingsAgencyId:'" + ownCollectionIdenifer + "'";
             return new Profile(search, includeOwnHoldings, filterQuery);
         }
