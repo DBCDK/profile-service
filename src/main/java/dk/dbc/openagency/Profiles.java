@@ -72,7 +72,7 @@ public class Profiles {
                     .map(c -> "rec.collectionIdentifier:\"" + c + "\"")
                     .collect(Collectors.joining(" OR "));
             if (includeOwnHoldings)
-                filterQuery = filterQuery + " OR rec.holdingsAgencyId:'" + ownCollectionIdenifer + "'";
+                filterQuery = filterQuery + " OR rec.holdingsAgencyId:\"" + ownCollectionIdenifer + "\"";
             return new Profile(search, includeOwnHoldings, filterQuery);
         }
     }
