@@ -29,29 +29,34 @@ pipeline {
                     } else {
                         println(" Building BRANCH_NAME == ${BRANCH_NAME}")
                     }
-                }
 
-                def status = sh returnStatus: true, script:  """
-                    exit=0
-                    rm -rf \$WORKSPACE/.repo/dk/dbc 
-                    mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
-                    if ! mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end  clean install javadoc:aggregate -Dsurefire.useFile=false; then
-                        exit=1
-                    fi
-                    mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs
-                    exit \$exit
-                """
-                always {
-                    script {
-                        junit testResults: '**/target/surefire-reports/TEST-*.xml'
+                    def status = sh returnStatus: true, script:  """
+                        exit=0
+                        rm -rf \$WORKSPACE/.repo/dk/dbc 
+                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
+                        if ! mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end  clean install -Dsurefire.useFile=false; then
+                            exit=1
+                        fi
+                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
+                        exit \$exit
+                    """
 
-                        def java = scanForIssues tool: [$class: 'Java']
-                        def javadoc = scanForIssues tool: [$class: 'JavaDoc']
+                    junit testResults: '**/target/surefire-reports/TEST-*.xml'
 
-                        publishIssues issues:[java,javadoc], unstableTotalAll:1
-                    }
-               }
-               script {
+                    def java = scanForIssues tool: [$class: 'Java']
+                    def javadoc = scanForIssues tool: [$class: 'JavaDoc']
+
+                    publishIssues issues:[java,javadoc], unstableTotalAll:1
+
+                    def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
+                    publishIssues issues:[pmd], unstableTotalAll:1
+
+                    def cpd = scanForIssues tool: [$class: 'Cpd'], pattern: '**/target/cpd.xml'
+                    publishIssues issues:[cpd]
+
+                    def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
+                    publishIssues issues:[findbugs], unstableTotalAll:1
+
                    if ( $status != 0 ) {
                        currentBuild.result = Result.FAILED
                    }
@@ -102,20 +107,6 @@ pipeline {
                         }
                     }
                 }
-            }
-        }
-    }
-    post {
-        always {
-            script {
-                def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
-                publishIssues issues:[pmd], unstableTotalAll:1
-
-                def cpd = scanForIssues tool: [$class: 'Cpd'], pattern: '**/target/cpd.xml'
-                publishIssues issues:[cpd]
-
-                def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
-                publishIssues issues:[findbugs], unstableTotalAll:1
             }
         }
     }
