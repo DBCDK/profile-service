@@ -33,39 +33,35 @@ pipeline {
                     }
 
                     def status = sh returnStatus: true, script:  """
-                        exit=0
                         rm -rf \$WORKSPACE/.repo
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
-                        if ! mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end clean install -Dsurefire.useFile=false; then
-                            exit=1
-                        fi
-                        exit \$exit
+                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end clean install -Dsurefire.useFile=false
                     """
                     if ( status != 0 ) {
                         currentBuild.result = Result.FAILURE
                     }
 
-                }
-            }
-            always {
-                sh """mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate"""
+                    junit testResults: '**/target/surefire-reports/TEST-*.xml'
 
-                junit testResults: '**/target/surefire-reports/TEST-*.xml'
+                    def java = scanForIssues tool: [$class: 'Java']
+                    def javadoc = scanForIssues tool: [$class: 'JavaDoc']
+                    publishIssues issues:[java, javadoc], unstableTotalAll:1
 
-                def java = scanForIssues tool: [$class: 'Java']
-                def javadoc = scanForIssues tool: [$class: 'JavaDoc']
+                    // We want code-coverage and pmd even if unittests fails
+                    def status = sh returnStatus: true, script:  """
+                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
+                    """
 
-                publishIssues issues:[java,javadoc], unstableTotalAll:1
+                    def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
+                    publishIssues issues:[pmd], unstableTotalAll:1
 
-                def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
-                publishIssues issues:[pmd], unstableTotalAll:1
+                    def cpd = scanForIssues tool: [$class: 'Cpd'], pattern: '**/target/cpd.xml'
+                    publishIssues issues:[cpd]
 
-                def cpd = scanForIssues tool: [$class: 'Cpd'], pattern: '**/target/cpd.xml'
-                publishIssues issues:[cpd]
-
-                def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
-                publishIssues issues:[findbugs], unstableTotalAll:1
-            }
+                    def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
+                    publishIssues issues:[findbugs], unstableTotalAll:1
+               }
+            } 
         }
 
         stage("docker") {
@@ -100,7 +96,7 @@ pipeline {
 
                             def app = docker.build("$imageName:${imageLabel}", '--pull --no-cache --file target/docker/Dockerfile .')
 
-                            if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
+                            if (currentBuild.resultIsBetterOrEqualTo(Result.SUCCESS)) {
                                 docker.withRegistry('https://docker-os.dbc.dk', 'docker') {
                                     app.push()
                                     if (env.BRANCH_NAME ==~ /master|trunk/) {
