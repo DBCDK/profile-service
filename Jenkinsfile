@@ -1,6 +1,8 @@
+properties([
+    disableConcurrentBuilds()
+])
 if (env.BRANCH_NAME == 'master') {
     properties([
-        disableConcurrentBuilds()
     ])
 }
 pipeline {
@@ -32,35 +34,38 @@ pipeline {
 
                     def status = sh returnStatus: true, script:  """
                         exit=0
-                        rm -rf \$WORKSPACE/.repo/dk/dbc 
+                        rm -rf \$WORKSPACE/.repo
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
-                        if ! mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end  clean install -Dsurefire.useFile=false; then
+                        if ! mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end clean install -Dsurefire.useFile=false; then
                             exit=1
                         fi
-                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
                         exit \$exit
                     """
                     if ( status != 0 ) {
                         currentBuild.result = Result.FAILURE
                     }
 
-                    junit testResults: '**/target/surefire-reports/TEST-*.xml'
+                }
+            }
+            always {
+                sh """mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate"""
 
-                    def java = scanForIssues tool: [$class: 'Java']
-                    def javadoc = scanForIssues tool: [$class: 'JavaDoc']
+                junit testResults: '**/target/surefire-reports/TEST-*.xml'
 
-                    publishIssues issues:[java,javadoc], unstableTotalAll:1
+                def java = scanForIssues tool: [$class: 'Java']
+                def javadoc = scanForIssues tool: [$class: 'JavaDoc']
 
-                    def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
-                    publishIssues issues:[pmd], unstableTotalAll:1
+                publishIssues issues:[java,javadoc], unstableTotalAll:1
 
-                    def cpd = scanForIssues tool: [$class: 'Cpd'], pattern: '**/target/cpd.xml'
-                    publishIssues issues:[cpd]
+                def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
+                publishIssues issues:[pmd], unstableTotalAll:1
 
-                    def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
-                    publishIssues issues:[findbugs], unstableTotalAll:1
-               }
-            } 
+                def cpd = scanForIssues tool: [$class: 'Cpd'], pattern: '**/target/cpd.xml'
+                publishIssues issues:[cpd]
+
+                def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
+                publishIssues issues:[findbugs], unstableTotalAll:1
+            }
         }
 
         stage("docker") {
