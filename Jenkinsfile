@@ -39,7 +39,7 @@ pipeline {
                         exit=1
                     fi
                     mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs
-                    exit $exit
+                    exit \$exit
                 """
                 always {
                     script {
