@@ -31,7 +31,7 @@ pipeline {
                     }
                 }
 
-                sh """
+                def status = sh returnStatus: true, script:  """
                     exit=0
                     rm -rf \$WORKSPACE/.repo/dk/dbc 
                     mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
@@ -50,6 +50,11 @@ pipeline {
 
                         publishIssues issues:[java,javadoc], unstableTotalAll:1
                     }
+               }
+               script {
+                   if ( $status != 0 ) {
+                       currentBuild.result = Result.FAILED
+                   }
                }
             } 
         }
