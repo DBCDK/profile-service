@@ -41,6 +41,16 @@ pipeline {
                     mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs
                     exit $exit
                 """
+                always {
+                    script {
+                        junit testResults: '**/target/surefire-reports/TEST-*.xml'
+
+                        def java = scanForIssues tool: [$class: 'Java']
+                        def javadoc = scanForIssues tool: [$class: 'JavaDoc']
+
+                        publishIssues issues:[java,javadoc], unstableTotalAll:1
+                    }
+               }
             } 
         }
 
@@ -92,14 +102,6 @@ pipeline {
     }
     post {
         always {
-            script {
-                junit testResults: '**/target/surefire-reports/TEST-*.xml'
-
-                def java = scanForIssues tool: [$class: 'Java']
-                def javadoc = scanForIssues tool: [$class: 'JavaDoc']
-
-                publishIssues issues:[java,javadoc], unstableTotalAll:1
-            }
             script {
                 def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
                 publishIssues issues:[pmd], unstableTotalAll:1
