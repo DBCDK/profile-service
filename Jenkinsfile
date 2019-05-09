@@ -40,6 +40,9 @@ pipeline {
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
                         exit \$exit
                     """
+                    if ( status != 0 ) {
+                        currentBuild.result = Result.FAILED
+                    }
 
                     junit testResults: '**/target/surefire-reports/TEST-*.xml'
 
@@ -56,10 +59,6 @@ pipeline {
 
                     def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
                     publishIssues issues:[findbugs], unstableTotalAll:1
-
-                   if ( $status != 0 ) {
-                       currentBuild.result = Result.FAILED
-                   }
                }
             } 
         }
