@@ -48,7 +48,7 @@ pipeline {
                     publishIssues issues:[java, javadoc], unstableTotalAll:1
 
                     // We want code-coverage and pmd even if unittests fails
-                    def status = sh returnStatus: true, script:  """
+                    sh returnStatus: true, script:  """
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
                     """
 
