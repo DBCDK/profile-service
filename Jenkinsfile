@@ -37,20 +37,17 @@ pipeline {
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end clean install -Dsurefire.useFile=false
                     """
-                    if ( status != 0 ) {
-                        currentBuild.result = Result.FAILURE
-                    }
+
+                    // We want code-coverage and pmd/findbugs even if unittests fails
+                    sh returnStatus: true, script:  """
+                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
+                    """
 
                     junit testResults: '**/target/surefire-reports/TEST-*.xml'
 
                     def java = scanForIssues tool: [$class: 'Java']
                     def javadoc = scanForIssues tool: [$class: 'JavaDoc']
                     publishIssues issues:[java, javadoc], unstableTotalAll:1
-
-                    // We want code-coverage and pmd even if unittests fails
-                    sh returnStatus: true, script:  """
-                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
-                    """
 
                     def pmd = scanForIssues tool: [$class: 'Pmd'], pattern: '**/target/pmd.xml'
                     publishIssues issues:[pmd], unstableTotalAll:1
@@ -60,6 +57,10 @@ pipeline {
 
                     def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
                     publishIssues issues:[findbugs], unstableTotalAll:1
+
+                    if ( status != 0 ) {
+                        currentBuild.result = Result.FAILURE
+                    }
                }
             } 
         }
