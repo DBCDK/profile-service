@@ -39,7 +39,7 @@ pipeline {
                     """
 
                     // We want code-coverage and pmd/findbugs even if unittests fails
-                    sh returnStatus: true, script:  """
+                    status += sh returnStatus: true, script:  """
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo pmd:pmd pmd:cpd findbugs:findbugs javadoc:aggregate
                     """
 
@@ -61,7 +61,7 @@ pipeline {
                     if ( status != 0 ) {
                         currentBuild.result = Result.FAILURE
                     }
-               }
+                }
             } 
         }
 
@@ -81,13 +81,13 @@ pipeline {
                             def projectArtifactId = modulePom.getArtifactId()
                             def imageName = "${projectArtifactId}-${version}".toLowerCase()
                             if (! env.CHANGE_BRANCH) {
-                                imageLabel = env.BRANCH_NAME
+                                imageLabel = env.BRANCH_NAME.toLowerCase()
                             } else {
-                                imageLabel = env.CHANGE_BRANCH
+                                imageLabel = env.CHANGE_BRANCH.toLowerCase()
                             }
                             if ( ! (imageLabel ==~ /master|trunk/) ) {
                                 println("Using branch_name ${imageLabel}")
-                                imageLabel = imageLabel.split(/\//)[-1].toLowerCase()
+                                imageLabel = imageLabel.split(/\//)[-1]
                             } else {
                                 println(" Using Master branch ${BRANCH_NAME}")
                                 imageLabel = env.BUILD_NUMBER
