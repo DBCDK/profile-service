@@ -41,7 +41,7 @@ pipeline {
                         exit \$exit
                     """
                     if ( status != 0 ) {
-                        currentBuild.result = Result.FAILED
+                        currentBuild.result = Result.FAILURE
                     }
 
                     junit testResults: '**/target/surefire-reports/TEST-*.xml'
