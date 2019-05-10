@@ -59,6 +59,13 @@ pipeline {
                     def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
                     publishIssues issues:[findbugs], unstableTotalAll:1
 
+                    step([$class: 'JacocoPublisher', 
+                          execPattern: '**/target/*.exec',
+                          classPattern: '**/target/classes',
+                          sourcePattern: '**/src/main/java',
+                          exclusionPattern: '**/src/test*'
+                    ])
+
                     if ( status != 0 ) {
                         currentBuild.result = Result.FAILURE
                     }
