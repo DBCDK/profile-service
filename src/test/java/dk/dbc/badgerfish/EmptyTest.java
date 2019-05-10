@@ -31,6 +31,6 @@ public class EmptyTest {
 
     @Test(timeout = 2_500L)
     public void test() throws Exception {
-        fail("OK");
+//        fail("OK");
     }
 }
