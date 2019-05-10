@@ -114,7 +114,7 @@ pipeline {
 
                             def app = docker.build("$imageName:${imageLabel}", '--pull --no-cache --file target/docker/Dockerfile .')
 
-                            if (currentBuild.resultIsBetterOrEqualTo(Result.SUCCESS)) {
+                            if (currentBuild.resultIsBetterOrEqualTo('SUCCESS')) {
                                 docker.withRegistry('https://docker-os.dbc.dk', 'docker') {
                                     app.push()
                                     if (env.BRANCH_NAME ==~ /master|trunk/) {
