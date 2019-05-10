@@ -31,6 +31,8 @@ pipeline {
                     } else {
                         println(" Building BRANCH_NAME == ${BRANCH_NAME}")
                     }
+                    def p = readMavenPom().packaging
+                    println(" packaging: $p")
 
                     def status = sh returnStatus: true, script:  """
                         rm -rf \$WORKSPACE/.repo
