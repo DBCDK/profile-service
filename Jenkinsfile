@@ -36,7 +36,7 @@ pipeline {
                         rm -rf \$WORKSPACE/.repo
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo dependency:resolve dependency:resolve-plugins >/dev/null
                         mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo clean
-                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end clean org.jacoco:jacoco-maven-plugin:prepare-agent install -Dsurefire.useFile=false
+                        mvn -B -Dmaven.repo.local=\$WORKSPACE/.repo --fail-at-end org.jacoco:jacoco-maven-plugin:prepare-agent install -Dsurefire.useFile=false
                     """
 
                     // We want code-coverage and pmd/findbugs even if unittests fails
