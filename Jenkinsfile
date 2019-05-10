@@ -4,6 +4,10 @@ properties([
 if (env.BRANCH_NAME == 'master') {
     properties([
     ])
+    triggers {
+        upstream(upstreamProjects: "Docker-payara5-bump-trigger",
+            threshold: hudson.model.Result.SUCCESS)
+    }
 }
 pipeline {
     agent { label "devel8" }
@@ -59,21 +63,12 @@ pipeline {
                     def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
                     publishIssues issues:[findbugs], unstableTotalAll:1
 
-                    if ( readMavenPom().packaging == 'pom' ) {
-                        step([$class: 'JacocoPublisher', 
-                              execPattern: '**/target/*.exec',
-                              classPattern: '**/target/classes',
-                              sourcePattern: '**/src/main/java',
-                              exclusionPattern: '**/src/test*'
-                        ])
-                    } else {
-                        step([$class: 'JacocoPublisher', 
-                              execPattern: 'target/*.exec,**/target/*.exec',
-                              classPattern: 'target/classes',
-                              sourcePattern: 'src/main/java',
-                              exclusionPattern: 'src/test*'
-                        ])
-                    }
+                    step([$class: 'JacocoPublisher', 
+                          execPattern: 'target/*.exec,**/target/*.exec',
+                          classPattern: 'target/classes,**/target/classes',
+                          sourcePattern: 'src/main/java,**/src/main/java',
+                          exclusionPattern: 'src/test*,**/src/test*'
+                    ])
 
                     if ( status != 0 ) {
                         currentBuild.result = Result.FAILURE
