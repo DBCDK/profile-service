@@ -31,8 +31,6 @@ pipeline {
                     } else {
                         println(" Building BRANCH_NAME == ${BRANCH_NAME}")
                     }
-                    def p = readMavenPom().packaging
-                    println(" packaging: $p")
 
                     def status = sh returnStatus: true, script:  """
                         rm -rf \$WORKSPACE/.repo
@@ -61,29 +59,27 @@ pipeline {
                     def findbugs = scanForIssues tool: [$class: 'FindBugs'], pattern: '**/target/findbugsXml.xml'
                     publishIssues issues:[findbugs], unstableTotalAll:1
 
-                    step([$class: 'JacocoPublisher', 
-                          execPattern: '**/target/*.exec',
-                          classPattern: '**/target/classes',
-                          sourcePattern: '**/src/main/java',
-                          exclusionPattern: '**/src/test*'
-                    ])
+                    if ( readMavenPom().packaging == 'pom' ) {
+                        step([$class: 'JacocoPublisher', 
+                              execPattern: '**/target/*.exec',
+                              classPattern: '**/target/classes',
+                              sourcePattern: '**/src/main/java',
+                              exclusionPattern: '**/src/test*'
+                        ])
+                    } else {
+                        step([$class: 'JacocoPublisher', 
+                              execPattern: 'target/*.exec',
+                              classPattern: 'target/classes',
+                              sourcePattern: 'src/main/java',
+                              exclusionPattern: 'src/test*'
+                        ])
+                    }
 
                     if ( status != 0 ) {
                         currentBuild.result = Result.FAILURE
                     }
                 }
             } 
-        }
-
-        stage("coverage") {
-            steps {
-                step([$class: 'JacocoPublisher', 
-                      execPattern: '**/target/*.exec',
-                      classPattern: '**/target/classes',
-                      sourcePattern: '**/src/main/java',
-                      exclusionPattern: '**/src/test*'
-                ])
-            }
         }
 
         stage("docker") {
