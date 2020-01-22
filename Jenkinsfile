@@ -1,4 +1,4 @@
-def workerNode = 'devel9'
+def workerNode = 'devel10'
 
 if (env.BRANCH_NAME == 'master') {
     properties([
